@@ -31,8 +31,10 @@ namespace Window
 		// Basic FPS tracking
 		float fpsTimeElapsed = 0.0f;
 		__int64 fpsFrameCounter = 0;
+		
 
 	}
+	
 }
 
 // Getters for window-related information
@@ -42,6 +44,7 @@ float Window::AspectRatio() { return (float)windowWidth / windowHeight; }
 HWND Window::Handle() { return windowHandle; }
 bool Window::HasFocus() { return hasFocus; }
 bool Window::IsMinimized() { return isMinimized; }
+
 
 // --------------------------------------------------------
 // Creates the actual window for our application

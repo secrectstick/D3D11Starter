@@ -2,10 +2,15 @@
 
 #include <d3d11.h>
 #include <wrl/client.h>
+#include <memory>
 
 class Game
 {
 public:
+	// fields for Imgui window
+	std::unique_ptr<float[]> bgColor;
+
+
 	// Basic OOP setup
 	Game();
 	~Game();

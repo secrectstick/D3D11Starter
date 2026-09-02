@@ -20,6 +20,15 @@ using namespace DirectX;
 // --------------------------------------------------------
 Game::Game()
 {
+	
+	//initlizing the bgColor
+	this->bgColor = std::make_unique<float[]>(4);
+	this->bgColor[0] = 0.0f; // R
+	this->bgColor[1] = 0.0f; // G
+	this->bgColor[2] = 0.0f; // B
+	this->bgColor[3] = 1.0f; // A
+
+
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -232,7 +241,8 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
-	
+	////////////////////////////////////////// remove this and use it for the imgui window
+	unsigned int x = Window::Height();
 }
 
 
@@ -258,7 +268,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	{
 		// Clear the back buffer (erase what's on screen) and depth buffer
 		const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	color);
+		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	this->bgColor.get());
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
