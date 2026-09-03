@@ -37,9 +37,9 @@ Game::Game()
 	
 	//initlizing the bgColor
 	this->bgColor = std::make_unique<float[]>(4);
-	this->bgColor[0] = 0.0f; // R
-	this->bgColor[1] = 0.0f; // G
-	this->bgColor[2] = 0.0f; // B
+	this->bgColor[0] = 0.5f; // R
+	this->bgColor[1] = 0.5f; // G
+	this->bgColor[2] = 0.5f; // B
 	this->bgColor[3] = 1.0f; // A
 
 	isDemoShowing = false;
