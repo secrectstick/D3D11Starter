@@ -11,6 +11,9 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
 
+
+
+
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -20,6 +23,17 @@ using namespace DirectX;
 // --------------------------------------------------------
 Game::Game()
 {
+	// Initialize ImGui itself & platform/renderer backends
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui_ImplWin32_Init(Window::Handle());
+	ImGui_ImplDX11_Init(Graphics::Device.Get(), Graphics::Context.Get());
+	
+	// Pick a style (uncomment one of these 3)
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+	//ImGui::StyleColorsClassic();
+
 	
 	//initlizing the bgColor
 	this->bgColor = std::make_unique<float[]>(4);
@@ -27,6 +41,11 @@ Game::Game()
 	this->bgColor[1] = 0.0f; // G
 	this->bgColor[2] = 0.0f; // B
 	this->bgColor[3] = 1.0f; // A
+
+	isDemoShowing = false;
+
+	this->customNumber = std::make_unique<float>();
+	*(this->customNumber) = 1.0f;
 
 
 	// Helper methods for loading shaders, creating some basic
@@ -67,6 +86,10 @@ Game::Game()
 // --------------------------------------------------------
 Game::~Game()
 {
+	// ImGui clean up
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 }
 
@@ -254,6 +277,54 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
+
+	// Put this all in a helper method that is called from Game::Update()
+	// Feed fresh data to ImGui
+	ImGuiIO& io = ImGui::GetIO();
+	io.DeltaTime = deltaTime;
+	io.DisplaySize.x = (float)Window::Width();
+	io.DisplaySize.y = (float)Window::Height();
+	// Reset the frame
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+	// Determine new input capture
+	Input::SetKeyboardCapture(io.WantCaptureKeyboard);
+	Input::SetMouseCapture(io.WantCaptureMouse);
+	
+
+	
+	// Show the UI window
+	ImGui::Begin("My Window"); // Everything after is part of the window
+	ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
+	ImGui::Text("window size: %dx%d ", Window::Width(),Window::Height());
+
+	ImGui::ColorEdit4("select backgrund color",this->bgColor.get());
+
+	
+	// Create a button and test for a click
+	if (ImGui::Button("Press to show demo window"))
+	{
+		this->isDemoShowing = !this->isDemoShowing;
+	}
+
+	if (this->isDemoShowing) {
+		ImGui::ShowDemoWindow();
+	}
+
+	if (ImGui::CollapsingHeader("custom drop down"))
+	{
+		ImGui::Text("custom drop down text");
+	}
+
+	ImGui::Checkbox("custom checkbox to control demo window", &this->isDemoShowing);
+
+	ImGui::DragFloat("custom drag float", this->customNumber.get());
+
+	
+
+
+	ImGui::End(); // Ends the current windo
 }
 
 
@@ -297,6 +368,9 @@ void Game::Draw(float deltaTime, float totalTime)
 			0,     // Offset to the first index we want to use
 			0);    // Offset to add to each index when looking up vertices
 	}
+
+	ImGui::Render(); // Turns this frame’s UI into renderable triangles
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the scree
 
 	// Frame END
 	// - These should happen exactly ONCE PER FRAME

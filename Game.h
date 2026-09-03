@@ -3,13 +3,21 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <memory>
+// This code assumes files are in "ImGui" subfolder!
+// Adjust as necessary for your own folder structure and project setup
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_impl_dx11.h"
+#include "ImGui/imgui_impl_win32.h"
+
 
 class Game
 {
 public:
 	// fields for Imgui window
 	std::unique_ptr<float[]> bgColor;
+	bool isDemoShowing;
 
+	std::unique_ptr<float> customNumber;
 
 	// Basic OOP setup
 	Game();
