@@ -3,26 +3,26 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <memory>
+#include "Vertex.h"
 
 class Mesh
 {
 public:
-	// fields for Imgui window
-	std::unique_ptr<float[]> bgColor;
-	bool isDemoShowing;
-
-	std::unique_ptr<float> customNumber;
 
 	// Basic OOP setup
-	Mesh();
+	Mesh(int indexCount, int vertexCount, Vertex* vertices, int* indices);
 	~Mesh();
 	Mesh(const Mesh&) = delete; // Remove copy constructor
 	Mesh& operator=(const Mesh&) = delete; // Remove copy-assignment operator
 
 	// Primary functions
-	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
-	void OnResize();
+	int getVertexCount();
+	int getIndexCount();
+	int getTriCount();
+	ID3D11Buffer* getIndexBuffer();
+	ID3D11Buffer* getVertexBuffer();
+
 
 private:
 	int idxCount;
@@ -32,6 +32,10 @@ private:
 	// Buffers to hold actual geometry data
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
+
+	// private help functions
+	void createBuffers(Vertex* vertices, int* indices);
+
 
 };
 

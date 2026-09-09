@@ -8,7 +8,8 @@
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
-
+#include <vector>
+#include "Mesh.h"
 
 class Game
 {
@@ -18,6 +19,8 @@ public:
 	bool isDemoShowing;
 
 	std::unique_ptr<float> customNumber;
+
+	std::vector<std::shared_ptr<Mesh>> meshList;
 
 	// Basic OOP setup
 	Game();
