@@ -10,7 +10,7 @@ class Mesh
 public:
 
 	// Basic OOP setup
-	Mesh(int indexCount, int vertexCount, Vertex* vertices, int* indices);
+	Mesh(const char* _name, int indexCount, int vertexCount, Vertex* vertices, int* indices);
 	~Mesh();
 	Mesh(const Mesh&) = delete; // Remove copy constructor
 	Mesh& operator=(const Mesh&) = delete; // Remove copy-assignment operator
@@ -20,13 +20,16 @@ public:
 	int getVertexCount();
 	int getIndexCount();
 	int getTriCount();
+	const char* getName();
 	ID3D11Buffer* getIndexBuffer();
 	ID3D11Buffer* getVertexBuffer();
 
 
 private:
+	//private fields
 	int idxCount;
 	int vertCount;
+	const char* name;
 	
 
 	// Buffers to hold actual geometry data

@@ -175,6 +175,7 @@ void Game::CreateGeometry()
 	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	XMFLOAT4 purple = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f);
 
 	// Set up the vertices of the triangle we would like to draw
 	// - We're going to copy this array, exactly as it exists in CPU memory
@@ -202,8 +203,46 @@ void Game::CreateGeometry()
 	// - But just to see how it's done...
 	int indices[] = { 0, 1, 2 };
 
-	std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>(3,3,vertices,indices);
+	std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>("triangle",3,3,vertices,indices);
 	meshList.push_back(mesh1);
+
+	//building a rectangle
+	Vertex vertices2[] =
+	{
+		{ XMFLOAT3(+0.7f, -0.6f, +0.0f), red },
+		{ XMFLOAT3(+0.6f, -0.6f, +0.0f), red },
+		{ XMFLOAT3(+0.7f, -0.5f, +0.0f), red },
+		{ XMFLOAT3(+0.6f,-0.5f,+0.0f),red}
+	};
+
+	int indices2[] = { 0,1,2,
+						3,2,1 };
+
+	std::shared_ptr<Mesh> mesh2 = std::make_shared<Mesh>("quad", 6, 4, vertices2, indices2);
+	meshList.push_back(mesh2);
+
+	//building a pentagon
+	Vertex vertices3[] =
+	{
+		{ XMFLOAT3(+0.4f,  +0.9f,  +0.0f), purple }, 
+		{ XMFLOAT3(+0.9f,  +0.5f,  +0.0f), purple }, 
+		{ XMFLOAT3(+0.7f,  -0.0f,  +0.0f), purple }, 
+		{ XMFLOAT3(+0.3f,  -0.0f,  +0.0f), purple }, 
+		{ XMFLOAT3(+0.1f,  +0.5f,  +0.0f), purple }  
+	};
+
+	int indices3[] = { 
+		0, 1, 2,   
+		0, 2, 3,   
+		0, 3, 4};
+
+	std::shared_ptr<Mesh> mesh3 = std::make_shared<Mesh>("penta", 9, 5, vertices3, indices3);
+	meshList.push_back(mesh3);
+
+
+
+
+
 	
 }
 
@@ -245,30 +284,22 @@ void Game::Update(float deltaTime, float totalTime)
 	
 	// Show the UI window
 	ImGui::Begin("My Window"); // Everything after is part of the window
-	ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
-	ImGui::Text("window size: %dx%d ", Window::Width(),Window::Height());
 
 	ImGui::ColorEdit4("select backgrund color",this->bgColor.get());
 
 	
-	// Create a button and test for a click
-	if (ImGui::Button("Press to show demo window"))
-	{
-		this->isDemoShowing = !this->isDemoShowing;
+	for (int i = 0; i < meshList.size();i++) {
+
+		//make a collapseable header for each mesh's info in the ui window
+		if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
+		{
+			ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
+			ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
+			ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
+		}
+
+		
 	}
-
-	if (this->isDemoShowing) {
-		ImGui::ShowDemoWindow();
-	}
-
-	if (ImGui::CollapsingHeader("custom drop down"))
-	{
-		ImGui::Text("custom drop down text");
-	}
-
-	ImGui::Checkbox("custom checkbox to control demo window", &this->isDemoShowing);
-
-	ImGui::DragFloat("custom drag float", this->customNumber.get());
 
 	
 
@@ -294,6 +325,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//Draw Step
 
+	//draw each mesh in the meshList
 	for (int i = 0; i < meshList.size();i++) {
 		this->meshList.at(i).get()->Draw(deltaTime, totalTime);
 	}

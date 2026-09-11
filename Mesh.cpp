@@ -2,11 +2,19 @@
 #include "Graphics.h"
 #include "Vertex.h"
 
-
-Mesh::Mesh(int indexCount,int vertexCount, Vertex* vertices, int* indices)
+/// <summary>
+/// constructor for mesh class
+/// </summary>
+/// <param name="_name">name of this mesh</param>
+/// <param name="indexCount">number of indices</param>
+/// <param name="vertexCount">number of vertices</param>
+/// <param name="vertices">pointer array of vertices</param>
+/// <param name="indices">pointer to an array of indices</param>
+Mesh::Mesh(const char* _name, int indexCount,int vertexCount, Vertex* vertices, int* indices)
 {
 	this->idxCount = indexCount;
 	this->vertCount = vertexCount;
+	this->name = _name;
 
 	this->createBuffers(vertices,indices);
 
@@ -23,13 +31,23 @@ Mesh::~Mesh()
 {
 }
 
+//getter function for name field
+const char* Mesh::getName()
+{
+	return this->name;
+}
+
+//getter function for vertCount field
 int Mesh::getVertexCount() {
 	return this->vertCount;
 }
 
+//getter function for idxCount field
 int Mesh::getIndexCount() {
 	return this->idxCount;
 }
+
+//getter function for number of triangles
 int Mesh::getTriCount() {
 	if ((this->idxCount % 3) > 0) {
 		return ((this->idxCount / 3) + 1);
@@ -41,15 +59,21 @@ int Mesh::getTriCount() {
 
 }
 
+//getter function for indexbuffer pointer
 ID3D11Buffer* Mesh::getIndexBuffer() {
 	return this->indexBuffer.Get();
 }
 
+//getter function for vertexbuffer pointer
 ID3D11Buffer* Mesh::getVertexBuffer() {
 	return this->vertexBuffer.Get();
 }
 
-
+/// <summary>
+/// helper function to make the index and vertex buffers
+/// </summary>
+/// <param name="vertices">vertices to use to make the vertex buffer</param>
+/// <param name="indices">indices to use to make the index buffer</param>
 void Mesh::createBuffers(Vertex* vertices, int* indices) {
 	// Create a VERTEX BUFFER
 	// - This holds the vertex data of triangles for a single object
@@ -89,7 +113,7 @@ void Mesh::createBuffers(Vertex* vertices, int* indices) {
 		//  - Bind Flag (used as an index buffer instead of a vertex buffer) 
 		D3D11_BUFFER_DESC ibd = {};
 		ibd.Usage = D3D11_USAGE_IMMUTABLE;	// Will NEVER change
-		ibd.ByteWidth = sizeof(unsigned int) * 3;	// 3 = number of indices in the buffer
+		ibd.ByteWidth = sizeof(unsigned int) * this->getIndexCount();	// 3 = number of indices in the buffer
 		ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells Direct3D this is an index buffer
 		ibd.CPUAccessFlags = 0;	// Note: We cannot access the data from C++ (this is good)
 		ibd.MiscFlags = 0;
@@ -105,6 +129,11 @@ void Mesh::createBuffers(Vertex* vertices, int* indices) {
 	}
 }
 
+/// <summary>
+/// draws this mesh to the screen
+/// </summary>
+/// <param name="deltaTime">passed in from game draw</param>
+/// <param name="totalTime">passed in from game draw</param>
 void Mesh::Draw(float deltaTime, float totalTime) {
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
