@@ -279,13 +279,29 @@ void Game::Update(float deltaTime, float totalTime)
 	// Determine new input capture
 	Input::SetKeyboardCapture(io.WantCaptureKeyboard);
 	Input::SetMouseCapture(io.WantCaptureMouse);
-	
 
-	
+
+
 	// Show the UI window
 	ImGui::Begin("My Window"); // Everything after is part of the window
 
-	ImGui::ColorEdit4("select backgrund color",this->bgColor.get());
+	if (ImGui::CollapsingHeader("App Details")){
+		ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
+		ImGui::Text("window size: %dx%d ", Window::Width(), Window::Height());
+
+		ImGui::ColorEdit4("select backgrund color", this->bgColor.get());
+
+
+		// Create a button and test for a click
+		if (ImGui::Button("Press to show demo window"))
+		{
+			this->isDemoShowing = !this->isDemoShowing;
+		}
+
+		if (this->isDemoShowing) {
+			ImGui::ShowDemoWindow();
+		}
+	}
 
 	
 	for (int i = 0; i < meshList.size();i++) {
