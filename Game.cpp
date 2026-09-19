@@ -5,6 +5,8 @@
 #include "PathHelpers.h"
 #include "Window.h"
 #include "Mesh.h"
+#include "bufferStruct.h"
+
 
 #include <DirectXMath.h>
 
@@ -42,6 +44,17 @@ Game::Game()
 	this->bgColor[2] = 0.5f; // B
 	this->bgColor[3] = 1.0f; // A
 
+
+	VertexShaderExternalData vsData{};
+	vsData.ColorTint = XMFLOAT4(1, 0.5, 0.5, 1);
+	vsData.Offset = XMFLOAT3(0.01f, 0, 0);
+	this->vsConstData = std::make_unique<VertexShaderExternalData>(vsData);
+
+	XMFLOAT3 offsetMulti = XMFLOAT3(0.1f, 0.0f, 0.0f);
+	this->constOffsetMulti = std::make_unique<XMFLOAT3>(offsetMulti);
+
+	
+
 	isDemoShowing = false;
 
 	this->customNumber = std::make_unique<float>();
@@ -74,6 +87,27 @@ Game::Game()
 		//    these calls will need to happen multiple times per frame
 		Graphics::Context->VSSetShader(vertexShader.Get(), 0, 0);
 		Graphics::Context->PSSetShader(pixelShader.Get(), 0, 0);
+
+	}
+
+	//set up const buffer
+	{
+		unsigned int size = sizeof(VertexShaderExternalData);
+		size = ((size + 15) / 16) * 16;
+
+		D3D11_BUFFER_DESC cbDesc{};
+		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+		cbDesc.ByteWidth = size;
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbDesc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+		cbDesc.MiscFlags = 0;
+		cbDesc.StructureByteStride = 0;
+
+		Graphics::Device->CreateBuffer(&cbDesc,0,constantBuffer.GetAddressOf());
+	}
+
+	{
+		Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 	}
 }
 
@@ -289,7 +323,7 @@ void Game::Update(float deltaTime, float totalTime)
 		ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
 		ImGui::Text("window size: %dx%d ", Window::Width(), Window::Height());
 
-		ImGui::ColorEdit4("select backgrund color", this->bgColor.get());
+		ImGui::ColorEdit4("select background color", this->bgColor.get());
 
 
 		// Create a button and test for a click
@@ -303,21 +337,31 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 	}
 
-	
-	for (int i = 0; i < meshList.size();i++) {
+	if (ImGui::CollapsingHeader("Meshes"))
+	{
 
-		//make a collapseable header for each mesh's info in the ui window
-		if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
-		{
-			ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
-			ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
-			ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
+
+		for (int i = 0; i < meshList.size();i++) {
+
+			//make a collapseable header for each mesh's info in the ui window
+			if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
+			{
+				ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
+				ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
+				ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
+			}
+
+
 		}
-
-		
 	}
-
 	
+	if (ImGui::CollapsingHeader("constant Buffer controls")) {
+		ImGui::ColorEdit4("select color tint", &vsConstData->ColorTint.x);
+
+		ImGui::DragFloat3("drag float", &this->constOffsetMulti.get()->x);
+
+
+	}
 
 
 	ImGui::End(); // Ends the current windo
@@ -340,6 +384,34 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//Draw Step
+	D3D11_MAPPED_SUBRESOURCE map;
+
+	
+	this->vsConstData->Offset.x += this->constOffsetMulti.get()->x * deltaTime;
+	this->vsConstData->Offset.y += this->constOffsetMulti.get()->y * deltaTime;
+	this->vsConstData->Offset.z += this->constOffsetMulti.get()->z * deltaTime;
+	
+
+
+	Graphics::Context->Map(
+		constantBuffer.Get(),
+		0,
+		D3D11_MAP_WRITE_DISCARD,
+		0,
+		&map
+	);
+	
+
+	//copy
+
+	memcpy(map.pData, this->vsConstData.get(), sizeof(VertexShaderExternalData));
+
+	//unmap
+	Graphics::Context->Unmap(
+		constantBuffer.Get(),
+		0
+	);
+
 
 	//draw each mesh in the meshList
 	for (int i = 0; i < meshList.size();i++) {

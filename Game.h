@@ -10,6 +10,7 @@
 #include "ImGui/imgui_impl_win32.h"
 #include <vector>
 #include "Mesh.h"
+#include "bufferStruct.h"
 
 class Game
 {
@@ -20,7 +21,11 @@ public:
 
 	std::unique_ptr<float> customNumber;
 
+	std::unique_ptr<VertexShaderExternalData> vsConstData;
+	std::unique_ptr<DirectX::XMFLOAT3> constOffsetMulti;
+
 	std::vector<std::shared_ptr<Mesh>> meshList;
+
 
 	// Basic OOP setup
 	Game();
@@ -52,5 +57,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+
+	//constant buffer
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
+
 };
 
