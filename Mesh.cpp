@@ -132,9 +132,7 @@ void Mesh::createBuffers(Vertex* vertices, int* indices) {
 /// <summary>
 /// draws this mesh to the screen
 /// </summary>
-/// <param name="deltaTime">passed in from game draw</param>
-/// <param name="totalTime">passed in from game draw</param>
-void Mesh::Draw(float deltaTime, float totalTime) {
+void Mesh::Draw() {
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
 	// - Other Direct3D calls will also be necessary to do more complex things

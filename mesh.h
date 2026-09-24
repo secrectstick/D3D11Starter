@@ -16,7 +16,7 @@ public:
 	Mesh& operator=(const Mesh&) = delete; // Remove copy-assignment operator
 
 	// Primary functions
-	void Draw(float deltaTime, float totalTime);
+	void Draw();
 	int getVertexCount();
 	int getIndexCount();
 	int getTriCount();

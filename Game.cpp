@@ -358,7 +358,7 @@ void Game::Update(float deltaTime, float totalTime)
 	if (ImGui::CollapsingHeader("constant Buffer controls")) {
 		ImGui::ColorEdit4("select color tint", &vsConstData->ColorTint.x);
 
-		ImGui::DragFloat3("drag float", &this->constOffsetMulti.get()->x);
+		ImGui::DragFloat3("select movement", &this->constOffsetMulti.get()->x);
 
 
 	}
@@ -415,7 +415,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//draw each mesh in the meshList
 	for (int i = 0; i < meshList.size();i++) {
-		this->meshList.at(i).get()->Draw(deltaTime, totalTime);
+		this->meshList.at(i).get()->Draw();
 	}
 
 	//

@@ -47,6 +47,7 @@ struct VertexToPixel
 // --------------------------------------------------------
 VertexToPixel main( VertexShaderInput input )
 {
+	//adding comment to test
 	// Set up output struct
 	VertexToPixel output;
 
