@@ -25,6 +25,8 @@ using namespace DirectX;
 // --------------------------------------------------------
 Game::Game()
 {
+	this->TransForm = std::make_unique<transform>();
+
 	// Initialize ImGui itself & platform/renderer backends
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -47,7 +49,10 @@ Game::Game()
 
 	VertexShaderExternalData vsData{};
 	vsData.ColorTint = XMFLOAT4(1, 0.5, 0.5, 1);
-	vsData.Offset = XMFLOAT3(0.01f, 0, 0);
+	
+	XMMATRIX ident = XMMatrixIdentity();
+	XMStoreFloat4x4(&vsData.WorldMatrix, ident);
+
 	this->vsConstData = std::make_unique<VertexShaderExternalData>(vsData);
 
 	XMFLOAT3 offsetMulti = XMFLOAT3(0.1f, 0.0f, 0.0f);
@@ -240,6 +245,15 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>("triangle",3,3,vertices,indices);
 	meshList.push_back(mesh1);
 
+	std::shared_ptr<Entity> entity1 = std::make_shared<Entity>(mesh1, std::make_shared<transform>());
+	entityList.push_back(entity1);
+
+	std::shared_ptr<transform> tr = std::make_shared<transform>();
+	tr.get()->MoveAbsolute(0.5f, 0.5f, 0.0f);
+
+	std::shared_ptr<Entity> entity2 = std::make_shared<Entity>(mesh1, tr);
+	entityList.push_back(entity2);
+
 	//building a rectangle
 	Vertex vertices2[] =
 	{
@@ -363,6 +377,41 @@ void Game::Update(float deltaTime, float totalTime)
 
 	}
 
+	if (ImGui::CollapsingHeader("Entities")) {
+		for (int i = 0; i < entityList.size();i++) {
+			
+
+			std::string str = "Entity " + std::to_string(i);
+
+			const char* const_str = str.c_str();
+
+			if (ImGui::CollapsingHeader(const_str))
+			{
+				XMFLOAT3 position = entityList.at(i)->TransForm->getPosition();
+				XMFLOAT3 rotation = entityList.at(i)->TransForm->getPitchYawRoll();
+				XMFLOAT3 scale = entityList.at(i)->TransForm->getScale();
+
+				if (ImGui::DragFloat3("position", &position.x)) {
+					entityList.at(i)->TransForm->SetPosition(position.x, position.y, position.z);
+				}
+					
+
+				if (ImGui::DragFloat3("rotation", &rotation.x)) {
+					entityList.at(i)->TransForm->setPitchYawRoll(rotation.x, rotation.y, rotation.z);
+				}
+					
+
+				if (ImGui::DragFloat3("scale", &scale.x)) {
+					entityList.at(i)->TransForm->SetScale(scale.x, scale.y, scale.z);
+				}
+					
+			}
+
+			
+		}
+	}
+
+
 
 	ImGui::End(); // Ends the current windo
 }
@@ -384,41 +433,40 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//Draw Step
-	D3D11_MAPPED_SUBRESOURCE map;
-
-	
-	this->vsConstData->Offset.x += this->constOffsetMulti.get()->x * deltaTime;
-	this->vsConstData->Offset.y += this->constOffsetMulti.get()->y * deltaTime;
-	this->vsConstData->Offset.z += this->constOffsetMulti.get()->z * deltaTime;
 	
 
+	for (int i = 0; i < entityList.size();i++) {
+		D3D11_MAPPED_SUBRESOURCE map;
 
-	Graphics::Context->Map(
-		constantBuffer.Get(),
-		0,
-		D3D11_MAP_WRITE_DISCARD,
-		0,
-		&map
-	);
-	
+		//this->entityList.at(i)->TransForm->MoveAbsolute(0.0001f, 0, 0);
 
-	//copy
-
-	memcpy(map.pData, this->vsConstData.get(), sizeof(VertexShaderExternalData));
-
-	//unmap
-	Graphics::Context->Unmap(
-		constantBuffer.Get(),
-		0
-	);
+		this->vsConstData->WorldMatrix = this->entityList.at(i)->TransForm->getWorldMatrix();
 
 
-	//draw each mesh in the meshList
-	for (int i = 0; i < meshList.size();i++) {
-		this->meshList.at(i).get()->Draw();
+		Graphics::Context->Map(
+			constantBuffer.Get(),
+			0,
+			D3D11_MAP_WRITE_DISCARD,
+			0,
+			&map
+		);
+
+
+		//copy
+
+		memcpy(map.pData, this->vsConstData.get(), sizeof(VertexShaderExternalData));
+
+		//unmap
+		Graphics::Context->Unmap(
+			constantBuffer.Get(),
+			0
+		);
+
+
+		this->entityList.at(i).get()->Draw();
 	}
 
-	//
+	///////
 
 	ImGui::Render(); // Turns this frame’s UI into renderable triangles
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData()); // Draws it to the scree

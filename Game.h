@@ -11,6 +11,8 @@
 #include <vector>
 #include "Mesh.h"
 #include "bufferStruct.h"
+#include "transform.h"
+#include "Entity.h"
 
 class Game
 {
@@ -26,6 +28,10 @@ public:
 
 	std::vector<std::shared_ptr<Mesh>> meshList;
 
+	std::vector<std::shared_ptr<Entity>> entityList;
+
+
+	std::shared_ptr<transform> TransForm;
 
 	// Basic OOP setup
 	Game();

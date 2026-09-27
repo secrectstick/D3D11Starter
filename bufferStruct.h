@@ -4,5 +4,5 @@
 
 struct VertexShaderExternalData {
 	DirectX::XMFLOAT4 ColorTint;
-	DirectX::XMFLOAT3 Offset;
+	DirectX::XMFLOAT4X4 WorldMatrix;
 };
