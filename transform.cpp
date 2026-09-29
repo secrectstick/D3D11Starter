@@ -162,7 +162,7 @@ DirectX::XMFLOAT4X4 transform::GetWorldInverseTransposeMatrix()
 
 	XMMATRIX inverseMatrix = XMMatrixInverse(&determinant, XMLoadFloat4x4(&worldMatrix));
 
-	XMMATRIX invTransposeMatrix =  XMMatrixTranspose(inverseMatrix);
+	XMMATRIX invTransposeMatrix = XMMatrixTranspose(inverseMatrix);
 
 	XMStoreFloat4x4(&result, invTransposeMatrix);
 

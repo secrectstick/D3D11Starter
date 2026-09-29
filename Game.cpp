@@ -13,6 +13,7 @@
 // Needed for a helper function to load pre-compiled shader files
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
+#include <cmath>
 
 
 
@@ -269,6 +270,17 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> mesh2 = std::make_shared<Mesh>("quad", 6, 4, vertices2, indices2);
 	meshList.push_back(mesh2);
 
+	std::shared_ptr<Entity> entity3 = std::make_shared<Entity>(mesh2, std::make_shared<transform>());
+	entityList.push_back(entity3);
+
+	std::shared_ptr<transform> tr2 = std::make_shared<transform>();
+	tr2.get()->MoveAbsolute(-2.0f, 0.5f, 0.0f);
+	tr2.get()->Scale(2.0f, 2.0f, 2.0f);
+
+	std::shared_ptr<Entity> entity4 = std::make_shared<Entity>(mesh2, tr2);
+	entityList.push_back(entity4);
+
+
 	//building a pentagon
 	Vertex vertices3[] =
 	{
@@ -286,6 +298,9 @@ void Game::CreateGeometry()
 
 	std::shared_ptr<Mesh> mesh3 = std::make_shared<Mesh>("penta", 9, 5, vertices3, indices3);
 	meshList.push_back(mesh3);
+
+	std::shared_ptr<Entity> entity5 = std::make_shared<Entity>(mesh3, std::make_shared<transform>());
+	entityList.push_back(entity5);
 
 
 
@@ -328,92 +343,121 @@ void Game::Update(float deltaTime, float totalTime)
 	Input::SetKeyboardCapture(io.WantCaptureKeyboard);
 	Input::SetMouseCapture(io.WantCaptureMouse);
 
-
-
 	// Show the UI window
-	ImGui::Begin("My Window"); // Everything after is part of the window
-
-	if (ImGui::CollapsingHeader("App Details")){
-		ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
-		ImGui::Text("window size: %dx%d ", Window::Width(), Window::Height());
-
-		ImGui::ColorEdit4("select background color", this->bgColor.get());
-
-
-		// Create a button and test for a click
-		if (ImGui::Button("Press to show demo window"))
-		{
-			this->isDemoShowing = !this->isDemoShowing;
-		}
-
-		if (this->isDemoShowing) {
-			ImGui::ShowDemoWindow();
-		}
-	}
-
-	if (ImGui::CollapsingHeader("Meshes"))
 	{
+		
+		ImGui::Begin("My Window"); // Everything after is part of the window
+
+		if (ImGui::CollapsingHeader("App Details")) {
+			ImGui::Text("current framerate: %.2f ", ImGui::GetIO().Framerate);
+			ImGui::Text("window size: %dx%d ", Window::Width(), Window::Height());
+
+			ImGui::ColorEdit4("select background color", this->bgColor.get());
 
 
-		for (int i = 0; i < meshList.size();i++) {
-
-			//make a collapseable header for each mesh's info in the ui window
-			if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
+			// Create a button and test for a click
+			if (ImGui::Button("Press to show demo window"))
 			{
-				ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
-				ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
-				ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
+				this->isDemoShowing = !this->isDemoShowing;
 			}
+
+			if (this->isDemoShowing) {
+				ImGui::ShowDemoWindow();
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Meshes"))
+		{
+
+
+			for (int i = 0; i < meshList.size();i++) {
+
+				//make a collapseable header for each mesh's info in the ui window
+				if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
+				{
+					ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
+					ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
+					ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
+				}
+
+
+			}
+		}
+
+		if (ImGui::CollapsingHeader("constant Buffer controls")) {
+			ImGui::ColorEdit4("select color tint", &vsConstData->ColorTint.x);
+
+			ImGui::DragFloat3("select movement", &this->constOffsetMulti.get()->x);
 
 
 		}
-	}
-	
-	if (ImGui::CollapsingHeader("constant Buffer controls")) {
-		ImGui::ColorEdit4("select color tint", &vsConstData->ColorTint.x);
 
-		ImGui::DragFloat3("select movement", &this->constOffsetMulti.get()->x);
+		if (ImGui::CollapsingHeader("Entities")) {
+			for (int i = 0; i < entityList.size();i++) {
 
 
-	}
+				std::string str = "Entity " + std::to_string(i);
 
-	if (ImGui::CollapsingHeader("Entities")) {
-		for (int i = 0; i < entityList.size();i++) {
-			
+				const char* const_str = str.c_str();
 
-			std::string str = "Entity " + std::to_string(i);
+				if (ImGui::CollapsingHeader(const_str))
+				{
+					XMFLOAT3 position = entityList.at(i)->TransForm->getPosition();
+					XMFLOAT3 rotation = entityList.at(i)->TransForm->getPitchYawRoll();
+					XMFLOAT3 scale = entityList.at(i)->TransForm->getScale();
 
-			const char* const_str = str.c_str();
+					if (ImGui::DragFloat3("position", &position.x)) {
+						entityList.at(i)->TransForm->SetPosition(position.x, position.y, position.z);
+					}
 
-			if (ImGui::CollapsingHeader(const_str))
-			{
-				XMFLOAT3 position = entityList.at(i)->TransForm->getPosition();
-				XMFLOAT3 rotation = entityList.at(i)->TransForm->getPitchYawRoll();
-				XMFLOAT3 scale = entityList.at(i)->TransForm->getScale();
 
-				if (ImGui::DragFloat3("position", &position.x)) {
-					entityList.at(i)->TransForm->SetPosition(position.x, position.y, position.z);
+					if (ImGui::DragFloat3("rotation", &rotation.x)) {
+						entityList.at(i)->TransForm->setPitchYawRoll(rotation.x, rotation.y, rotation.z);
+					}
+
+
+					if (ImGui::DragFloat3("scale", &scale.x)) {
+						entityList.at(i)->TransForm->SetScale(scale.x, scale.y, scale.z);
+					}
+
+					ImGui::Text("Mesh index count: %i", entityList.at(i)->GetMesh().get()->getIndexCount());
+
 				}
-					
 
-				if (ImGui::DragFloat3("rotation", &rotation.x)) {
-					entityList.at(i)->TransForm->setPitchYawRoll(rotation.x, rotation.y, rotation.z);
-				}
-					
 
-				if (ImGui::DragFloat3("scale", &scale.x)) {
-					entityList.at(i)->TransForm->SetScale(scale.x, scale.y, scale.z);
-				}
-					
 			}
+		}
 
-			
+
+
+		ImGui::End(); // Ends the current windo
+	}
+
+	//custom movements for each entity
+	for (int i = 0; i < entityList.size();i++) {
+		switch (i) {
+		case 0:
+			entityList.at(i)->TransForm->Rotate(0, 0, deltaTime);
+			break;
+		case 1:
+			entityList.at(i)->TransForm->MoveAbsolute( deltaTime, 0, 0);
+			if(entityList.at(i)->TransForm->getPosition().x > 2.0f) {
+				entityList.at(i)->TransForm->MoveAbsolute( -4.0f, 0, 0);
+			}
+			break;
+		case 2:
+			entityList.at(i)->TransForm->SetScale(1.0f + std::sin(totalTime), 1.0f + std::sin(totalTime), 1.0f);
+			break;
+		case 3:
+			entityList.at(i)->TransForm->SetPosition(std::sin(totalTime)-1.2f, 
+				entityList.at(i)->TransForm->getPosition().y, 
+				entityList.at(i)->TransForm->getPosition().z);
+			break;
+		case 4:
+			entityList.at(i)->TransForm->Rotate(0, 0, -1*deltaTime);
+			break;
 		}
 	}
-
-
-
-	ImGui::End(); // Ends the current windo
 }
 
 
