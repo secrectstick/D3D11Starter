@@ -20,6 +20,5 @@ Entity::Entity(std::shared_ptr<Mesh> _mesh, std::shared_ptr<transform> _transfor
 
 void Entity::Draw()
 {
-	
 	mesh.get()->Draw();
 }

@@ -13,6 +13,7 @@
 #include "bufferStruct.h"
 #include "transform.h"
 #include "Entity.h"
+#include "Camera.h"
 
 class Game
 {
@@ -67,5 +68,9 @@ private:
 	//constant buffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
 
+	std::shared_ptr<Camera> camera;
+
+	std::vector<std::shared_ptr<Camera>> camList;
+	int activeCamIndex;
 };
 

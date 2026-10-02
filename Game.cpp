@@ -28,6 +28,31 @@ Game::Game()
 {
 	this->TransForm = std::make_unique<transform>();
 
+	//init the camera
+	std::shared_ptr<Camera> camera = std::make_shared<Camera>(
+		XMFLOAT3(0.0f, 0.0f, -5.0f),	// Position
+		XM_PIDIV4,				// Field of view
+		Window::AspectRatio(),  // Aspect ratio
+		0.01f,					// Near clip
+		100.0f,					// Far clip
+		5.0f,					// Move speed
+		0.002f);				// Look speed
+
+	camList.push_back(camera);
+
+	std::shared_ptr<Camera>camera2 = std::make_shared<Camera>(
+		XMFLOAT3(0.0f, 0.0f, -1.0f),	// Position
+		XM_PIDIV4,				// Field of view
+		Window::AspectRatio(),  // Aspect ratio
+		0.01f,					// Near clip
+		100.0f,					// Far clip
+		5.0f,					// Move speed
+		0.002f);				// Look speed
+
+	camList.push_back(camera2);
+		
+	activeCamIndex = 0;
+
 	// Initialize ImGui itself & platform/renderer backends
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -51,8 +76,16 @@ Game::Game()
 	VertexShaderExternalData vsData{};
 	vsData.ColorTint = XMFLOAT4(1, 0.5, 0.5, 1);
 	
+	XMFLOAT4X4 viewMatrixStorage = camera->GetViewMatrix();
+	XMFLOAT4X4 projMatrixStorage = camera->GetProjectionMatrix();
+	
 	XMMATRIX ident = XMMatrixIdentity();
+	XMMATRIX view = XMLoadFloat4x4(&viewMatrixStorage);
+	XMMATRIX proj = XMLoadFloat4x4(&projMatrixStorage);
+
 	XMStoreFloat4x4(&vsData.WorldMatrix, ident);
+	XMStoreFloat4x4(&vsData.ViewMatrix, view);
+	XMStoreFloat4x4(&vsData.ProjMatrix, proj);
 
 	this->vsConstData = std::make_unique<VertexShaderExternalData>(vsData);
 
@@ -316,7 +349,11 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
-	
+
+	for(int i = 0; i < camList.size(); i++)
+	{
+		camList.at(i)->UpdateProjectionMatrix(Window::AspectRatio());
+	}
 }
 
 
@@ -428,9 +465,35 @@ void Game::Update(float deltaTime, float totalTime)
 			}
 		}
 
+		if (ImGui::CollapsingHeader("cam info & ctrl"))
+		{
+			if (ImGui::Button("Press to change cam"))
+			{
+				activeCamIndex++;
+				if (activeCamIndex >= camList.size()) {
+					activeCamIndex = 0;
+				}
+			}
+
+			// making stack vars so the l-value doesn't freak out
+			Camera cam = *camList.at(activeCamIndex).get();
+			XMFLOAT3 pos = cam.GetTransform().get()->getPosition();
+			XMFLOAT3 rot = cam.GetTransform().get()->getPitchYawRoll();
+			XMFLOAT3 fwd = cam.GetTransform().get()->GetForward();
+			XMFLOAT3 up = cam.GetTransform().get()->GetUp();
+			XMFLOAT3 right = cam.GetTransform().get()->GetRight();
+
+			ImGui::Text("active cam index: %i", activeCamIndex);
+			ImGui::InputFloat3("position", &pos.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputFloat3("rotation", &rot.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputFloat3("forward", &fwd.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputFloat3("up", &up.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputFloat3("right", &right.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
 
-		ImGui::End(); // Ends the current windo
+		}
+
+		ImGui::End(); // Ends the current window
 	}
 
 	//custom movements for each entity
@@ -458,6 +521,8 @@ void Game::Update(float deltaTime, float totalTime)
 			break;
 		}
 	}
+
+	camList.at(activeCamIndex)->Update(deltaTime);
 }
 
 
@@ -482,9 +547,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (int i = 0; i < entityList.size();i++) {
 		D3D11_MAPPED_SUBRESOURCE map;
 
-		//this->entityList.at(i)->TransForm->MoveAbsolute(0.0001f, 0, 0);
 
 		this->vsConstData->WorldMatrix = this->entityList.at(i)->TransForm->getWorldMatrix();
+		this->vsConstData->ViewMatrix = camList.at(activeCamIndex)->GetViewMatrix();
+		this->vsConstData->ProjMatrix = camList.at(activeCamIndex)->GetProjectionMatrix();
 
 
 		Graphics::Context->Map(
