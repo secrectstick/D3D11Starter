@@ -41,8 +41,7 @@ public:
 		float GetFarClip();
 		void SetFarClip(float distance);
 
-		float GetOrthographicWidth();
-		void SetOrthographicWidth(float width);
+
 
 
 private:

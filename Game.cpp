@@ -42,7 +42,7 @@ Game::Game()
 
 	std::shared_ptr<Camera>camera2 = std::make_shared<Camera>(
 		XMFLOAT3(0.0f, 0.0f, -1.0f),	// Position
-		XM_PIDIV4,				// Field of view
+		XM_PIDIV2,				// Field of view
 		Window::AspectRatio(),  // Aspect ratio
 		0.01f,					// Near clip
 		100.0f,					// Far clip
@@ -467,7 +467,7 @@ void Game::Update(float deltaTime, float totalTime)
 
 		if (ImGui::CollapsingHeader("cam info & ctrl"))
 		{
-			if (ImGui::Button("Press to change cam"))
+			if (ImGui::Button("Press to change to next cam"))
 			{
 				activeCamIndex++;
 				if (activeCamIndex >= camList.size()) {
@@ -484,11 +484,13 @@ void Game::Update(float deltaTime, float totalTime)
 			XMFLOAT3 right = cam.GetTransform().get()->GetRight();
 
 			ImGui::Text("active cam index: %i", activeCamIndex);
+			ImGui::Text("active cam fov (radians): %.2f", cam.GetFieldOfView());
 			ImGui::InputFloat3("position", &pos.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 			ImGui::InputFloat3("rotation", &rot.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 			ImGui::InputFloat3("forward", &fwd.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 			ImGui::InputFloat3("up", &up.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 			ImGui::InputFloat3("right", &right.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+			
 
 
 		}

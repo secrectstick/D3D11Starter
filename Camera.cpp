@@ -31,6 +31,8 @@ Camera::~Camera()
 void Camera::Update(float dt)
 {
 	float speed = movementSpeed * dt;
+	if (Input::KeyDown(VK_SHIFT)) { speed *= 5.0f; }
+	if (Input::KeyDown(VK_CONTROL)) { speed *= 0.5f; }
 
 	if (Input::KeyDown('W')) { Transform->MoveRelative(DirectX::XMFLOAT3(0.0f, 0.0f, speed)); }
 	if (Input::KeyDown('S')) { Transform->MoveRelative(DirectX::XMFLOAT3(0.0f, 0.0f, -speed)); }
@@ -64,10 +66,10 @@ void Camera::Update(float dt)
 			
 
 		// Only rotate by the amount that they moved
-		float pitchChange = newPitch - Transform->getPitchYawRoll().x;
+		dy = newPitch - Transform->getPitchYawRoll().x;
 
 
-		Transform->Rotate(pitchChange, dx, 0.0f);
+		Transform->Rotate(dy, dx, 0.0f);
 
 
 
