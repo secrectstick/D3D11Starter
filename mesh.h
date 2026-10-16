@@ -4,13 +4,18 @@
 #include <wrl/client.h>
 #include <memory>
 #include "Vertex.h"
+#include <string>
 
 class Mesh
 {
 public:
 
+	
+	Mesh(const char* name, const std::string& file);
+
+
 	// Basic OOP setup
-	Mesh(const char* _name, int indexCount, int vertexCount, Vertex* vertices, int* indices);
+	Mesh(const char* _name, int indexCount, int vertexCount, Vertex* vertices, unsigned int* indices);
 	~Mesh();
 	Mesh(const Mesh&) = delete; // Remove copy constructor
 	Mesh& operator=(const Mesh&) = delete; // Remove copy-assignment operator
@@ -37,7 +42,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 
 	// private help functions
-	void createBuffers(Vertex* vertices, int* indices);
+	void createBuffers(Vertex* vertices, unsigned int* indices);
 
 
 };

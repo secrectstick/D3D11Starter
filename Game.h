@@ -25,6 +25,7 @@ public:
 	std::unique_ptr<float> customNumber;
 
 	std::unique_ptr<VertexShaderExternalData> vsConstData;
+	std::unique_ptr<PixelShaderExternalData> psConstData;
 	std::unique_ptr<DirectX::XMFLOAT3> constOffsetMulti;
 
 	std::vector<std::shared_ptr<Mesh>> meshList;
@@ -49,6 +50,8 @@ private:
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders();
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> LoadVertexShader(const wchar_t* shaderPath);
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> LoadPixelShader(const wchar_t* shaderPath);
 	void CreateGeometry();
 
 	// Note the usage of ComPtr below
@@ -67,6 +70,7 @@ private:
 
 	//constant buffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBufferPS;
 
 	std::shared_ptr<Camera> camera;
 
