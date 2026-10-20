@@ -115,13 +115,6 @@ Game::Game()
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
-
-	//make materials here
-
-
-
-	//
-
 	CreateGeometry();
 
 	// Set initial graphics API state

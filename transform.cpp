@@ -6,7 +6,11 @@ transform::transform() :
 	position(0,0,0),
 	pitchYawRoll(0,0,0),
 	scale(1,1,1),
-	dirty(false)
+	forward(0.0f, 0.0f, 1.0f),
+	up(0.0f, 1.0f, 0.0f),
+	right(1.0f, 0.0f, 0.0f),
+	dirty(false),
+	vecDirty(false)
 {
 	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
 }

@@ -9,6 +9,8 @@ struct VertexShaderExternalData {
 
 };
 
+
+
 struct PixelShaderExternalData
 {
 	DirectX::XMFLOAT3 colorTint;
