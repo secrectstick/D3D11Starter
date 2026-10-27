@@ -15,4 +15,6 @@ struct PixelShaderExternalData
 {
 	DirectX::XMFLOAT3 colorTint;
 	float time;
+	DirectX::XMFLOAT2 uvScale;
+	DirectX::XMFLOAT2 uvOffset;
 };

@@ -4,6 +4,9 @@
 cbuffer ExternalData : register(b0)
 {
 	float3 colorTint;
+	float time;
+	float2 uvScale;
+	float2 uvOffset;
 }
 
 // - The name of the struct itself is unimportant
@@ -21,6 +24,10 @@ struct VertexToPixel
 	float3 normal : NORMAL;
 };
 
+// Example Texture2D and SamplerState definitions in an HLSL pixel shader
+Texture2D SurfaceColor : register(t0); // A texture assigned to texture slot 0
+SamplerState BasicSampler : register(s0); // A sampler assigned to sampler slot 0
+
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // 
@@ -32,9 +39,14 @@ struct VertexToPixel
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
+
+	input.uv = input.uv * uvScale + uvOffset;
+
 	// Just return the input color
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-	return float4(colorTint, 1);
+	float3 surface = SurfaceColor.Sample(BasicSampler, input.uv).rgb;
+	surface = surface * colorTint;
+	return float4(surface, 1);
 }

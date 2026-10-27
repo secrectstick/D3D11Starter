@@ -32,6 +32,8 @@ public:
 
 	std::vector<std::shared_ptr<Entity>> entityList;
 
+	std::vector<std::shared_ptr<Material>> materialList;
+
 
 	std::shared_ptr<transform> TransForm;
 

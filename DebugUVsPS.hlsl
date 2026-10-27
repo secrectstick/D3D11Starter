@@ -4,6 +4,9 @@
 cbuffer ExternalData : register(b0)
 {
 	float3 colorTint;
+	float time;
+	float2 uvScale;
+	float2 uvOffset;
 }
 
 // - The name of the struct itself is unimportant

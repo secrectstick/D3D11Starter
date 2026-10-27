@@ -6,7 +6,7 @@
 #include "Window.h"
 #include "Mesh.h"
 #include "bufferStruct.h"
-
+#include "WICTextureLoader.h"
 
 #include <DirectXMath.h>
 
@@ -100,6 +100,8 @@ Game::Game()
 		PixelShaderExternalData psData{};
 		psData.colorTint = XMFLOAT3(1, 0.5, 0.5);
 		psData.time = 0.0f;
+		psData.uvScale = XMFLOAT2(1.0f, 1.0f);	
+		psData.uvOffset = XMFLOAT2(0.0f, 0.0f);
 		this->psConstData = std::make_unique<PixelShaderExternalData>(psData);
 	}
 
@@ -134,41 +136,10 @@ Game::Game()
 
 	}
 
-	//set up const buffer for vertex shader
-	{
-		unsigned int size = sizeof(VertexShaderExternalData);
-		size = ((size + 15) / 16) * 16;
+	//set up const buffer heap
+	Graphics::ResizeConstBufferHeap(256 * 10000);
+	
 
-		D3D11_BUFFER_DESC cbDesc{};
-		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-		cbDesc.ByteWidth = size;
-		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDesc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
-		cbDesc.MiscFlags = 0;
-		cbDesc.StructureByteStride = 0;
-
-		Graphics::Device->CreateBuffer(&cbDesc,0,constantBuffer.GetAddressOf());
-
-		Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-	}
-
-	//set up const buffer for pixel shader
-	{
-		unsigned int PSsize = sizeof(PixelShaderExternalData);
-		PSsize = ((PSsize + 15) / 16) * 16;
-
-		D3D11_BUFFER_DESC cbDescPS{};
-		cbDescPS.Usage = D3D11_USAGE_DYNAMIC;
-		cbDescPS.ByteWidth = PSsize;
-		cbDescPS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDescPS.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
-		cbDescPS.MiscFlags = 0;
-		cbDescPS.StructureByteStride = 0;
-
-		Graphics::Device->CreateBuffer(&cbDescPS, 0, constantBufferPS.GetAddressOf());
-
-		Graphics::Context->PSSetConstantBuffers(0, 1, constantBufferPS.GetAddressOf());
-	}
 
 }
 
@@ -278,22 +249,61 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
+
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP; // What happens outside the 0-1 uv range
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;		// How to handle sampling between pixels
+	sampDesc.MaxAnisotropy = 16;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	Graphics::Device->CreateSamplerState(&sampDesc, sampler.GetAddressOf());
+
+	// Load textures
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> bricksSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> woodSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> asphaltSRV;
+
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Bricks.png").c_str(), 0, bricksSRV.GetAddressOf());
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Wood.png").c_str(), 0, woodSRV.GetAddressOf());
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Asphalt.png").c_str(), 0, asphaltSRV.GetAddressOf());
+
+	
+
+
+
+
 	//make a material
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertShader = LoadVertexShader(FixPath(L"VertexShader.cso").c_str());
 
 	DirectX::XMFLOAT3 tint = DirectX::XMFLOAT3(1.0f, 0.5f, 0.5f);
 	std::shared_ptr<Material> uvMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"DebugUVsPS.cso").c_str()), vertShader, tint);
+	materialList.push_back(uvMat);
 	std::shared_ptr<Material> normMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"DebugNormalsPS.cso").c_str()), vertShader, tint);
+	materialList.push_back(normMat);
 	std::shared_ptr<Material> customMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"CustomPS.cso").c_str()), vertShader, tint);
+	materialList.push_back(customMat);
 
 	DirectX::XMFLOAT3 white = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
-	std::shared_ptr<Material> whiteMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"PixelShader.cso").c_str()), vertShader, white);
+	std::shared_ptr<Material> combowhiteMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"ComboPixelShader.cso").c_str()), vertShader, white);
+	combowhiteMat->AddSampler(0, sampler);
+	combowhiteMat->AddSRV(0, bricksSRV);
+	combowhiteMat->AddSRV(1, asphaltSRV);
+	materialList.push_back(combowhiteMat);
 
 	DirectX::XMFLOAT3 red = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
 	std::shared_ptr<Material> redMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"PixelShader.cso").c_str()), vertShader, red);
+	redMat->AddSampler(0, sampler);
+	redMat->AddSRV(0, woodSRV);
+	materialList.push_back(redMat);
 
 	DirectX::XMFLOAT3 magenta = DirectX::XMFLOAT3(1.0f, 0.0f, 1.0f);
 	std::shared_ptr<Material> magentaMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"PixelShader.cso").c_str()), vertShader, magenta);
+	magentaMat->AddSampler(0, sampler);
+	magentaMat->AddSRV(0, bricksSRV);
+	materialList.push_back(magentaMat);
+
 
 
 
@@ -350,8 +360,8 @@ void Game::CreateGeometry()
 
 
 		std::shared_ptr<Material> materialList[] = {
-			whiteMat, redMat, magentaMat, customMat,
-			magentaMat, redMat, whiteMat
+			combowhiteMat, redMat, magentaMat, customMat,
+			magentaMat, redMat, combowhiteMat
 		};
 
 		for (int i = 0; i < 7; i++)
@@ -438,12 +448,22 @@ void Game::Update(float deltaTime, float totalTime)
 		if (ImGui::CollapsingHeader("Meshes"))
 		{
 
+			static int openMaterialIndex = -1;
+
+
 
 			for (int i = 0; i < meshList.size();i++) {
+
+				ImGui::SetNextItemOpen(openMaterialIndex == i);
 
 				//make a collapseable header for each mesh's info in the ui window
 				if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
 				{
+					if (openMaterialIndex != i)
+					{
+						openMaterialIndex = i;
+					}
+
 					ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
 					ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
 					ImGui::Text("indices: %i", this->meshList.at(i).get()->getIndexCount());
@@ -461,15 +481,23 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 
 		if (ImGui::CollapsingHeader("Entities")) {
+
 			for (int i = 0; i < entityList.size();i++) {
 
+				static int openMaterialIndex = -1;
 
-				std::string str = "Entity " + std::to_string(i);
+				std::string str = "Entity " + std::to_string(i + 1);
 
 				const char* const_str = str.c_str();
 
+				ImGui::SetNextItemOpen(openMaterialIndex == i);
+
 				if (ImGui::CollapsingHeader(const_str))
 				{
+					if (openMaterialIndex != i)
+					{
+						openMaterialIndex = i;
+					}
 					XMFLOAT3 position = entityList.at(i)->GetTransform()->getPosition();
 					XMFLOAT3 rotation = entityList.at(i)->GetTransform()->getPitchYawRoll();
 					XMFLOAT3 scale = entityList.at(i)->GetTransform()->getScale();
@@ -489,6 +517,7 @@ void Game::Update(float deltaTime, float totalTime)
 					}
 
 					ImGui::Text("Mesh index count: %i", entityList.at(i)->GetMesh().get()->getIndexCount());
+
 
 				}
 
@@ -526,6 +555,50 @@ void Game::Update(float deltaTime, float totalTime)
 
 		}
 
+		if (ImGui::CollapsingHeader("material info"))
+		{
+			static int openMaterialIndex = -1;
+
+			for(int i =0 ; i < materialList.size(); i++)
+			{
+				std::string str = "Material " + std::to_string(i + 1);
+				const char* const_str = str.c_str();
+
+				ImGui::SetNextItemOpen(openMaterialIndex == i);
+
+				if (ImGui::CollapsingHeader(const_str))
+				{
+					if (openMaterialIndex != i)
+					{
+						openMaterialIndex = i;
+					}
+					XMFLOAT3 colorTint = materialList.at(i)->GetColorTint();
+					XMFLOAT2 uvScale = materialList.at(i)->GetUVScale();
+					XMFLOAT2 uvOffset = materialList.at(i)->GetUVOffset();
+
+					if (ImGui::ColorEdit3("color tint", &colorTint.x)) {
+						materialList.at(i)->SetColorTint(colorTint);
+					}
+					if (ImGui::DragFloat2("uv scale", &uvScale.x)) {
+						materialList.at(i)->SetUVScale(uvScale);
+					}
+					if (ImGui::SliderFloat2("uv offset", &uvOffset.x, 0.0f, 1.0f)) {
+						materialList.at(i)->SetUVOffset(uvOffset);
+					}
+
+					for (auto imageSRV : materialList.at(i)->GetSRVs())
+					{
+						std::string str = "SRV slot: " + std::to_string(imageSRV.first);
+						const char* const_str = str.c_str();
+						ImGui::Text(const_str);
+
+						ImGui::Image(imageSRV.second.Get(), ImVec2(64, 64));
+					}
+
+				}
+			}
+		}
+
 		ImGui::End(); // Ends the current window
 	}
 
@@ -558,6 +631,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	
 
 	for (int i = 0; i < entityList.size();i++) {
+
+		std::shared_ptr<Material> mat = this->entityList.at(i)->GetMaterial();
+		mat->BindSRVsAndSamplers();
 		
 		Graphics::Context->VSSetShader(this->entityList.at(i)->GetMaterial()->GetVertexShader().Get(), 0, 0);
 		Graphics::Context->PSSetShader(this->entityList.at(i)->GetMaterial()->GetPixelShader().Get(), 0, 0);
@@ -566,58 +642,16 @@ void Game::Draw(float deltaTime, float totalTime)
 		this->vsConstData->WorldMatrix = this->entityList.at(i)->GetTransform()->getWorldMatrix();
 		this->vsConstData->ViewMatrix = camList.at(activeCamIndex)->GetViewMatrix();
 		this->vsConstData->ProjMatrix = camList.at(activeCamIndex)->GetProjectionMatrix();
+		Graphics::FillAndBindNextConstBuffer(vsConstData.get(), sizeof(VertexShaderExternalData), D3D11_VERTEX_SHADER, 0);
 
 
 		this->psConstData->time = totalTime;
 		this->psConstData->colorTint = this->entityList.at(i)->GetMaterial()->GetColorTint();
+		this->psConstData->uvScale = this->entityList.at(i)->GetMaterial()->GetUVScale();
+		this->psConstData->uvOffset = this->entityList.at(i)->GetMaterial()->GetUVOffset();
+		Graphics::FillAndBindNextConstBuffer(psConstData.get(), sizeof(PixelShaderExternalData), D3D11_PIXEL_SHADER, 0);
 
-		//// VS const buffer update
-		{
-			D3D11_MAPPED_SUBRESOURCE map;
-
-			Graphics::Context->Map(
-				constantBuffer.Get(),
-				0,
-				D3D11_MAP_WRITE_DISCARD,
-				0,
-				&map
-			);
-
-
-			//copy
-
-			memcpy(map.pData, this->vsConstData.get(), sizeof(VertexShaderExternalData));
-
-			//unmap
-			Graphics::Context->Unmap(
-				constantBuffer.Get(),
-				0
-			);
-		}
-
-		////// PS const buffer
-		{
-			D3D11_MAPPED_SUBRESOURCE map;
-
-			Graphics::Context->Map(
-				constantBufferPS.Get(),
-				0,
-				D3D11_MAP_WRITE_DISCARD,
-				0,
-				&map
-			);
-
-
-			//copy
-
-			memcpy(map.pData, this->psConstData.get(), sizeof(PixelShaderExternalData));
-
-			//unmap
-			Graphics::Context->Unmap(
-				constantBufferPS.Get(),
-				0
-			);
-		}
+		
 
 		this->entityList.at(i).get()->Draw();
 	}
