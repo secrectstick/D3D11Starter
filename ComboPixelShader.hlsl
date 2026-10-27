@@ -52,7 +52,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	//   of the triangle we're rendering
 	float3 surface = SurfaceColor.Sample(BasicSampler, input.uv).rgb;
 
-	input.uv.x = input.uv.x + sin(time);
+	//input.uv.x = input.uv.x + sin(time);
 	float3 surface2 = SurfaceColor2.Sample(BasicSampler, input.uv).rgb;
 
 	
