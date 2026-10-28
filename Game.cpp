@@ -276,30 +276,35 @@ void Game::CreateGeometry()
 
 	//make a material
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertShader = LoadVertexShader(FixPath(L"VertexShader.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> DebugUV = LoadPixelShader(FixPath(L"DebugUVsPS.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> DebugNormal = LoadPixelShader(FixPath(L"DebugNormalsPS.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> CustomPS = LoadPixelShader(FixPath(L"CustomPS.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> PixelShader = LoadPixelShader(FixPath(L"PixelShader.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> ComboPixelShader = LoadPixelShader(FixPath(L"ComboPixelShader.cso").c_str());
 
 	DirectX::XMFLOAT3 tint = DirectX::XMFLOAT3(1.0f, 0.5f, 0.5f);
-	std::shared_ptr<Material> uvMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"DebugUVsPS.cso").c_str()), vertShader, tint);
+	std::shared_ptr<Material> uvMat = std::make_shared<Material>(DebugUV, vertShader, tint);
 	materialList.push_back(uvMat);
-	std::shared_ptr<Material> normMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"DebugNormalsPS.cso").c_str()), vertShader, tint);
+	std::shared_ptr<Material> normMat = std::make_shared<Material>(DebugNormal, vertShader, tint);
 	materialList.push_back(normMat);
-	std::shared_ptr<Material> customMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"CustomPS.cso").c_str()), vertShader, tint);
+	std::shared_ptr<Material> customMat = std::make_shared<Material>(CustomPS, vertShader, tint);
 	materialList.push_back(customMat);
 
 	DirectX::XMFLOAT3 white = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
-	std::shared_ptr<Material> combowhiteMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"ComboPixelShader.cso").c_str()), vertShader, white);
+	std::shared_ptr<Material> combowhiteMat = std::make_shared<Material>(ComboPixelShader, vertShader, white);
 	combowhiteMat->AddSampler(0, sampler);
 	combowhiteMat->AddSRV(0, bricksSRV);
 	combowhiteMat->AddSRV(1, asphaltSRV);
 	materialList.push_back(combowhiteMat);
 
 	DirectX::XMFLOAT3 red = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
-	std::shared_ptr<Material> redMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"PixelShader.cso").c_str()), vertShader, red);
+	std::shared_ptr<Material> redMat = std::make_shared<Material>(PixelShader, vertShader, red);
 	redMat->AddSampler(0, sampler);
 	redMat->AddSRV(0, woodSRV);
 	materialList.push_back(redMat);
 
 	DirectX::XMFLOAT3 magenta = DirectX::XMFLOAT3(1.0f, 0.0f, 1.0f);
-	std::shared_ptr<Material> magentaMat = std::make_shared<Material>(LoadPixelShader(FixPath(L"PixelShader.cso").c_str()), vertShader, magenta);
+	std::shared_ptr<Material> magentaMat = std::make_shared<Material>(PixelShader, vertShader, magenta);
 	magentaMat->AddSampler(0, sampler);
 	magentaMat->AddSRV(0, bricksSRV);
 	materialList.push_back(magentaMat);
