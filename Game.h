@@ -14,12 +14,14 @@
 #include "transform.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "Light.h"
 
 class Game
 {
 public:
 	// fields for Imgui window
 	std::unique_ptr<float[]> bgColor;
+	std::unique_ptr<float[]> ambColor;
 	bool isDemoShowing;
 
 	std::unique_ptr<float> customNumber;
@@ -33,6 +35,8 @@ public:
 	std::vector<std::shared_ptr<Entity>> entityList;
 
 	std::vector<std::shared_ptr<Material>> materialList;
+
+	std::vector<Light> lights;
 
 
 	std::shared_ptr<transform> TransForm;

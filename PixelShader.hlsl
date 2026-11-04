@@ -1,28 +1,21 @@
+#include "structs.hlsli"
+#include "lights.hlsli"
 
 // Struct representing the data we expect to receive from earlier pipeline stages
 // - Should match the output of our corresponding vertex shader
 cbuffer ExternalData : register(b0)
 {
+	Light lights[LIGHT_COUNT];
+	int lightCount;
+	float3 ambientColor;
+	float3 cameraPosition;
+	float pad; // For alignment
 	float3 colorTint;
 	float time;
 	float2 uvScale;
 	float2 uvOffset;
 }
 
-// - The name of the struct itself is unimportant
-// - The variable names don't have to match other shaders (just the semantics)
-// - Each variable must have a semantic, which defines its usage
-struct VertexToPixel
-{
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
-	float4 screenPosition	: SV_POSITION;
-	float2 uv : TEXCOORD;
-	float3 normal : NORMAL;
-};
 
 // Example Texture2D and SamplerState definitions in an HLSL pixel shader
 Texture2D SurfaceColor : register(t0); // A texture assigned to texture slot 0
@@ -42,11 +35,35 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	input.uv = input.uv * uvScale + uvOffset;
 
-	// Just return the input color
-	// - This color (like most values passing through the rasterizer) is 
-	//   interpolated for each pixel between the corresponding vertices 
-	//   of the triangle we're rendering
+	input.normal = normalize(input.normal);
+
 	float3 surface = SurfaceColor.Sample(BasicSampler, input.uv).rgb;
 	surface = surface * colorTint;
-	return float4(surface, 1);
+
+	float specularScale = 0.5f;
+
+	float3 totalLight = ambientColor * surface;
+
+	for (int i = 0; i < lightCount; i++)
+	{
+		
+		Light light = lights[i];
+
+		switch (lights[i].Type)
+		{
+		case LIGHT_TYPE_DIRECTIONAL:
+			totalLight += DirLight(light, input.normal, input.worldPos, cameraPosition, surface, specularScale);
+			break;
+
+		case LIGHT_TYPE_POINT:
+			totalLight += PointLight(light, input.normal, input.worldPos, cameraPosition, surface, specularScale);
+			break;
+
+		case LIGHT_TYPE_SPOT:
+			totalLight += SpotLight(light, input.normal, input.worldPos, cameraPosition, surface, specularScale);
+			break;
+		}
+	}
+
+	return float4(totalLight, 1);
 }

@@ -1,28 +1,22 @@
+#include "structs.hlsli"
+#include "lights.hlsli"
+
 
 // Struct representing the data we expect to receive from earlier pipeline stages
 // - Should match the output of our corresponding vertex shader
 cbuffer ExternalData : register(b0)
 {
+	Light lights[LIGHT_COUNT];
+	int lightCount;
+	float3 ambientColor;
+	float3 cameraPosition;
+	float pad; // For alignment
 	float3 colorTint;
 	float time;
 	float2 uvScale;
 	float2 uvOffset;
 }
 
-// - The name of the struct itself is unimportant
-// - The variable names don't have to match other shaders (just the semantics)
-// - Each variable must have a semantic, which defines its usage
-struct VertexToPixel
-{
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
-	float4 screenPosition : SV_POSITION;
-	float2 uv : TEXCOORD;
-	float3 normal : NORMAL;
-};
 
 // Example Texture2D and SamplerState definitions in an HLSL pixel shader
 Texture2D SurfaceColor : register(t0); // A texture assigned to texture slot 0

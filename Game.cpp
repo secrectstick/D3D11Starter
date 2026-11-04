@@ -76,6 +76,12 @@ Game::Game()
 	this->bgColor[2] = 0.5f; // B
 	this->bgColor[3] = 1.0f; // A
 
+	this->ambColor = std::make_unique<float[]>(4);
+	this->ambColor[0] = 0.5f; // R
+	this->ambColor[1] = 0.5f; // G
+	this->ambColor[2] = 0.5f; // B
+	this->ambColor[3] = 1.0f; // A
+
 	//const VS data
 	{
 		VertexShaderExternalData vsData{};
@@ -282,13 +288,13 @@ void Game::CreateGeometry()
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> PixelShader = LoadPixelShader(FixPath(L"PixelShader.cso").c_str());
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ComboPixelShader = LoadPixelShader(FixPath(L"ComboPixelShader.cso").c_str());
 
-	DirectX::XMFLOAT3 tint = DirectX::XMFLOAT3(1.0f, 0.5f, 0.5f);
-	std::shared_ptr<Material> uvMat = std::make_shared<Material>(DebugUV, vertShader, tint);
-	materialList.push_back(uvMat);
-	std::shared_ptr<Material> normMat = std::make_shared<Material>(DebugNormal, vertShader, tint);
-	materialList.push_back(normMat);
-	std::shared_ptr<Material> customMat = std::make_shared<Material>(CustomPS, vertShader, tint);
-	materialList.push_back(customMat);
+	//DirectX::XMFLOAT3 tint = DirectX::XMFLOAT3(1.0f, 0.5f, 0.5f);
+	//std::shared_ptr<Material> uvMat = std::make_shared<Material>(DebugUV, vertShader, tint);
+	//materialList.push_back(uvMat);
+	//std::shared_ptr<Material> normMat = std::make_shared<Material>(DebugNormal, vertShader, tint);
+	//materialList.push_back(normMat);
+	//std::shared_ptr<Material> customMat = std::make_shared<Material>(CustomPS, vertShader, tint);
+	//materialList.push_back(customMat);
 
 	DirectX::XMFLOAT3 white = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	std::shared_ptr<Material> combowhiteMat = std::make_shared<Material>(ComboPixelShader, vertShader, white);
@@ -297,17 +303,23 @@ void Game::CreateGeometry()
 	combowhiteMat->AddSRV(1, asphaltSRV);
 	materialList.push_back(combowhiteMat);
 
-	DirectX::XMFLOAT3 red = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 red = DirectX::XMFLOAT3(0.5f, 0.2f, 0.2f);
 	std::shared_ptr<Material> redMat = std::make_shared<Material>(PixelShader, vertShader, red);
 	redMat->AddSampler(0, sampler);
 	redMat->AddSRV(0, woodSRV);
 	materialList.push_back(redMat);
 
-	DirectX::XMFLOAT3 magenta = DirectX::XMFLOAT3(1.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT3 magenta = DirectX::XMFLOAT3(0.5f, 0.2f, 0.5f);
 	std::shared_ptr<Material> magentaMat = std::make_shared<Material>(PixelShader, vertShader, magenta);
 	magentaMat->AddSampler(0, sampler);
 	magentaMat->AddSRV(0, bricksSRV);
 	materialList.push_back(magentaMat);
+
+
+	std::shared_ptr<Material> whiteMat = std::make_shared<Material>(PixelShader, vertShader, white);
+	whiteMat->AddSampler(0, sampler);
+	whiteMat->AddSRV(0, bricksSRV);
+	materialList.push_back(whiteMat);
 
 
 
@@ -330,43 +342,15 @@ void Game::CreateGeometry()
 	meshList.push_back(mesh6);
 	meshList.push_back(mesh7);
 
-	//make first row of entities with normal shader
-	{
-		for (int i = 0; i < 7; i++)
-		{
-			std::shared_ptr<transform> tr = std::make_shared<transform>();
+	
 
-			float x = -9.0f + (i * 3.0f);
-			tr->MoveAbsolute(x, 4.0f, 10.0f);
-
-			std::shared_ptr<Entity> entity = std::make_shared<Entity>(meshList[i], tr, normMat);
-
-			entityList.push_back(entity);
-		}
-	}
-
-	//make second row of entities with uv shader
-	{
-		for (int i = 0; i < 7; i++)
-		{
-			std::shared_ptr<transform> tr = std::make_shared<transform>();
-
-			float x = -9.0f + (i * 3.0f);
-			tr->MoveAbsolute(x, 1.0f, 10.0f);
-
-			std::shared_ptr<Entity> entity = std::make_shared<Entity>(meshList[i], tr, uvMat);
-
-			entityList.push_back(entity);
-		}
-	}
-
-	//make third row of entities with custom shader & pixel shader
+	//make row of entities with custom shader & pixel shader
 	{
 
 
 		std::shared_ptr<Material> materialList[] = {
-			combowhiteMat, redMat, magentaMat, customMat,
-			magentaMat, redMat, combowhiteMat
+			whiteMat, redMat, magentaMat, whiteMat,
+			magentaMat, redMat, whiteMat
 		};
 
 		for (int i = 0; i < 7; i++)
@@ -374,7 +358,7 @@ void Game::CreateGeometry()
 			std::shared_ptr<transform> tr = std::make_shared<transform>();
 
 			float x = -9.0f + (i * 3.0f);
-			tr->MoveAbsolute(x, -2.0f, 10.0f);
+			tr->MoveAbsolute(x, 1.0f, 10.0f);
 
 			std::shared_ptr<Entity> entity = std::make_shared<Entity>(
 				meshList[i], tr, materialList[i]);
@@ -384,7 +368,57 @@ void Game::CreateGeometry()
 	}
 
 
+	Light dirLight1 = {};
+	dirLight1.Color = XMFLOAT3(1, 0.1f, 0.1f);
+	dirLight1.Type = LIGHT_TYPE_DIRECTIONAL;
+	dirLight1.Intensity = 2.0f;
+	dirLight1.Direction = XMFLOAT3(1, 0 , 0); 
+	lights.push_back(dirLight1);
 
+	Light dirLight2 = {};
+	dirLight2.Color = XMFLOAT3(0.5f, 0.5f, 0.1f);
+	dirLight2.Type = LIGHT_TYPE_DIRECTIONAL;
+	dirLight2.Intensity = 2.0f;
+	dirLight2.Direction = XMFLOAT3(0, 1, 0);
+	lights.push_back(dirLight2);
+
+	Light dirLight3 = {};
+	dirLight3.Color = XMFLOAT3(0.3, 0.7f, 0.5f);
+	dirLight3.Type = LIGHT_TYPE_DIRECTIONAL;
+	dirLight3.Intensity = 2.0f;
+	dirLight3.Direction = XMFLOAT3(1, 1, 1);
+	lights.push_back(dirLight3);
+
+	Light pointLight = {};
+	pointLight.Color = XMFLOAT3(0.1f, 1, 0.1f);
+	pointLight.Type = LIGHT_TYPE_POINT;
+	pointLight.Intensity = 5.0f;
+	pointLight.Position = XMFLOAT3(-3, 6.0f, 10.0f);
+	pointLight.Range = 10.0f;
+	lights.push_back(pointLight);
+
+	Light spotLight = {};
+	spotLight.Color = XMFLOAT3(0.1f, 0.1f, 1);
+	spotLight.Type = LIGHT_TYPE_SPOT;
+	spotLight.Intensity = 10.0f;
+	spotLight.Position = XMFLOAT3(6.0f, 2.5f, 10.0f);
+	spotLight.Direction = XMFLOAT3(0, -1, 0);
+	spotLight.Range = 10.0f;
+	spotLight.SpotOuterAngle = XMConvertToRadians(15.0f);
+	spotLight.SpotInnerAngle = XMConvertToRadians(5.0f);
+	lights.push_back(spotLight);
+
+
+
+	for (int i = 0; i < lights.size(); i++) {
+
+		if (lights[i].Type != LIGHT_TYPE_POINT) {
+			XMStoreFloat3(
+				&lights[i].Direction,
+				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
+			);
+		}
+	}
 
 	
 }
@@ -461,13 +495,19 @@ void Game::Update(float deltaTime, float totalTime)
 
 				ImGui::SetNextItemOpen(openMaterialIndex == i);
 
+				
+
+
 				//make a collapseable header for each mesh's info in the ui window
 				if (ImGui::CollapsingHeader(this->meshList.at(i).get()->getName()))
 				{
+					
 					if (openMaterialIndex != i)
 					{
 						openMaterialIndex = i;
 					}
+					
+
 
 					ImGui::Text("triangles: %i", this->meshList.at(i).get()->getTriCount());
 					ImGui::Text("vertices: %i", this->meshList.at(i).get()->getVertexCount());
@@ -503,6 +543,7 @@ void Game::Update(float deltaTime, float totalTime)
 					{
 						openMaterialIndex = i;
 					}
+
 					XMFLOAT3 position = entityList.at(i)->GetTransform()->getPosition();
 					XMFLOAT3 rotation = entityList.at(i)->GetTransform()->getPitchYawRoll();
 					XMFLOAT3 scale = entityList.at(i)->GetTransform()->getScale();
@@ -604,13 +645,42 @@ void Game::Update(float deltaTime, float totalTime)
 			}
 		}
 
+		if (ImGui::CollapsingHeader("light info"))
+		{
+
+			ImGui::ColorEdit4("ambient color", this->ambColor.get());
+
+			static int openMaterialIndex = -1;
+
+			for (int i = 0; i < lights.size(); i++)
+			{
+				std::string str = "Light " + std::to_string(i + 1);
+				const char* const_str = str.c_str();
+
+				ImGui::SetNextItemOpen(openMaterialIndex == i);
+
+				if (ImGui::CollapsingHeader(const_str)) {
+
+					if (openMaterialIndex != i)
+					{
+						openMaterialIndex = i;
+					}
+
+
+					ImGui::ColorEdit3("color",&lights.at(i).Color.x);
+					ImGui::SliderFloat("intensity", &lights.at(i).Intensity, 0.0f, 20.0f);
+				}
+			}
+		}
+
+
 		ImGui::End(); // Ends the current window
 	}
 
 	//custom movements for each entity
 	for (int i = 0; i < entityList.size();i++) {
 		
-		entityList.at(i)->GetTransform()->Rotate(1 * deltaTime, -1 * deltaTime, 0);
+		entityList.at(i)->GetTransform()->Rotate(0, -0.2 * deltaTime, 0);
 	}
 
 	camList.at(activeCamIndex)->Update(deltaTime);
@@ -645,6 +715,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 
 		this->vsConstData->WorldMatrix = this->entityList.at(i)->GetTransform()->getWorldMatrix();
+		this->vsConstData->invTransMatrix = this->entityList.at(i)->GetTransform()->GetWorldInverseTransposeMatrix();
 		this->vsConstData->ViewMatrix = camList.at(activeCamIndex)->GetViewMatrix();
 		this->vsConstData->ProjMatrix = camList.at(activeCamIndex)->GetProjectionMatrix();
 		Graphics::FillAndBindNextConstBuffer(vsConstData.get(), sizeof(VertexShaderExternalData), D3D11_VERTEX_SHADER, 0);
@@ -654,6 +725,10 @@ void Game::Draw(float deltaTime, float totalTime)
 		this->psConstData->colorTint = this->entityList.at(i)->GetMaterial()->GetColorTint();
 		this->psConstData->uvScale = this->entityList.at(i)->GetMaterial()->GetUVScale();
 		this->psConstData->uvOffset = this->entityList.at(i)->GetMaterial()->GetUVOffset();
+		this->psConstData->lightCount = this->lights.size();
+		memcpy(this->psConstData->lights, &lights[0], sizeof(Light) * lights.size());
+		this->psConstData->ambientColor = XMFLOAT3(this->ambColor.get()[0], this->ambColor.get()[1], this->ambColor.get()[2]);
+		this->psConstData->cameraPosition = camList.at(activeCamIndex)->GetTransform().get()->getPosition();
 		Graphics::FillAndBindNextConstBuffer(psConstData.get(), sizeof(PixelShaderExternalData), D3D11_PIXEL_SHADER, 0);
 
 		
