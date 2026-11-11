@@ -90,7 +90,7 @@ float3 PointLight(Light light, float3 normal, float3 worldPos, float3 camPos, fl
 float3 SpotLight(Light light, float3 normal, float3 worldPos, float3 camPos, float3 surface, float specularScale)
 {
     
-    float lightDir = normalize(light.Position - worldPos);
+    float3 lightDir = normalize(light.Position - worldPos);
     float pixelAngle = saturate(dot(-lightDir, light.Direction));
     
     // Get cosines of angles and calculate range

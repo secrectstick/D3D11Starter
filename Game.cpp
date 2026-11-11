@@ -427,14 +427,14 @@ void Game::CreateGeometry()
 	lights.push_back(dirLight2);
 
 	Light dirLight3 = {};
-	dirLight3.Color = XMFLOAT3(0.3, 0.7f, 0.5f);
+	dirLight3.Color = XMFLOAT3(0.3f, 0.7f, 0.5f);
 	dirLight3.Type = LIGHT_TYPE_DIRECTIONAL;
 	dirLight3.Intensity = 2.0f;
 	dirLight3.Direction = XMFLOAT3(1, 1, 1);
 	lights.push_back(dirLight3);
 
 	Light pointLight = {};
-	pointLight.Color = XMFLOAT3(0.1f, 1, 0.1f);
+	pointLight.Color = XMFLOAT3(0.1f, 1.0f, 0.1f);
 	pointLight.Type = LIGHT_TYPE_POINT;
 	pointLight.Intensity = 5.0f;
 	pointLight.Position = XMFLOAT3(-3, 6.0f, 10.0f);
@@ -448,8 +448,8 @@ void Game::CreateGeometry()
 	spotLight.Position = XMFLOAT3(6.0f, 2.5f, 10.0f);
 	spotLight.Direction = XMFLOAT3(0, -1, 0);
 	spotLight.Range = 10.0f;
-	spotLight.SpotOuterAngle = XMConvertToRadians(15.0f);
-	spotLight.SpotInnerAngle = XMConvertToRadians(5.0f);
+	spotLight.SpotOuterAngle = XMConvertToRadians(50.0f);
+	spotLight.SpotInnerAngle = XMConvertToRadians(30.0f);
 	lights.push_back(spotLight);
 
 
@@ -724,7 +724,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//custom movements for each entity
 	for (int i = 0; i < entityList.size();i++) {
 		
-		entityList.at(i)->GetTransform()->Rotate(0, -0.2 * deltaTime, 0);
+		entityList.at(i)->GetTransform()->Rotate(0, -0.2f * deltaTime, 0);
 	}
 
 	camList.at(activeCamIndex)->Update(deltaTime);
@@ -769,7 +769,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		this->psConstData->colorTint = this->entityList.at(i)->GetMaterial()->GetColorTint();
 		this->psConstData->uvScale = this->entityList.at(i)->GetMaterial()->GetUVScale();
 		this->psConstData->uvOffset = this->entityList.at(i)->GetMaterial()->GetUVOffset();
-		this->psConstData->lightCount = this->lights.size();
+		this->psConstData->lightCount = static_cast<int>(this->lights.size());
 		memcpy(this->psConstData->lights, &lights[0], sizeof(Light) * lights.size());
 		this->psConstData->ambientColor = XMFLOAT3(this->ambColor.get()[0], this->ambColor.get()[1], this->ambColor.get()[2]);
 		this->psConstData->cameraPosition = camList.at(activeCamIndex)->GetTransform().get()->getPosition();
