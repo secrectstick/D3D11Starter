@@ -30,6 +30,7 @@ public:
 	ID3D11Buffer* getVertexBuffer();
 
 
+
 private:
 	//private fields
 	int idxCount;
@@ -43,6 +44,8 @@ private:
 
 	// private help functions
 	void createBuffers(Vertex* vertices, unsigned int* indices);
+
+	void CalculateTangents(Vertex* verts, size_t numVerts, unsigned int* indices, size_t numIndices);
 
 
 };

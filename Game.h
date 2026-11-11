@@ -15,6 +15,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Sky.h"
 
 class Game
 {
@@ -74,6 +75,8 @@ private:
 
 
 	std::shared_ptr<Camera> camera;
+
+	std::shared_ptr<Sky> sky;
 
 	std::vector<std::shared_ptr<Camera>> camList;
 	int activeCamIndex;

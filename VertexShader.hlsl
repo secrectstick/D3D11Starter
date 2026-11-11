@@ -40,6 +40,7 @@ VertexToPixel main( VertexShaderInput input )
 	// - We don't need to alter it here, but we do need to send it to the pixel shader
 	output.uv = input.uv;
 	output.normal = normalize(mul((float3x3)invTrans, input.normal));
+	output.tangent = normalize(mul((float3x3)worldMatrix, input.tangent));
 	output.worldPos = mul(worldMatrix, float4(input.localPosition, 1.0f)).xyz;
 
 

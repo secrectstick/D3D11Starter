@@ -22,6 +22,22 @@ struct Light
     float2 Padding; // 64 bytes
 };
 
+float3 NormalMapping(Texture2D map, SamplerState samplr, float2 uv, float3 normal, float3 tangent)
+{
+	
+    float3 unpackedNormal= map.Sample(samplr, uv).rgb * 2.0f - 1.0f;
+
+	
+    float3 N = normal;
+    float3 T = normalize(tangent - N * dot(tangent, N));
+    float3 B = cross(T, N);
+
+	
+    float3x3 TBN = float3x3(T, B, N);
+
+	
+    return normalize(mul(unpackedNormal, TBN));
+}
 
 
 float SpecularPhong(float3 normal, float3 lightDir, float3 camDir)

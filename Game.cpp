@@ -224,7 +224,7 @@ void Game::LoadShaders()
 	//  - Doing this NOW because it requires a vertex shader's byte code to verify against!
 	//  - Luckily, we already have that loaded (the vertex shader blob above)
 	{
-		D3D11_INPUT_ELEMENT_DESC inputElements[3] = {};
+		D3D11_INPUT_ELEMENT_DESC inputElements[4] = {};
 
 		// Set up the first element - a position, which is 3 float values
 		inputElements[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;				// Most formats are described as color channels; really it just means "Three 32-bit floats"
@@ -239,10 +239,14 @@ void Game::LoadShaders()
 		inputElements[2].SemanticName = "NORMAL";							
 		inputElements[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;	
 
+		inputElements[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;				
+		inputElements[3].SemanticName = "TANGENT";							
+		inputElements[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;	
+
 		// Create the input layout, verifying our description against actual shader code
 		Graphics::Device->CreateInputLayout(
 			inputElements,							// An array of descriptions
-			3,										// How many elements in that array?
+			4,										// How many elements in that array?
 			vertexShaderBlob->GetBufferPointer(),	// Pointer to the code of a shader that uses this layout
 			vertexShaderBlob->GetBufferSize(),		// Size of the shader code that uses this layout
 			inputLayout.GetAddressOf());			// Address of the resulting ID3D11InputLayout pointer
@@ -268,25 +272,33 @@ void Game::CreateGeometry()
 
 	// Load textures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> bricksSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> bricksNormSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> woodSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> asphaltSRV;
 
 	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Bricks.png").c_str(), 0, bricksSRV.GetAddressOf());
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/BricksNormal.png").c_str(), 0, bricksNormSRV.GetAddressOf());
 	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Wood.png").c_str(), 0, woodSRV.GetAddressOf());
 	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Asphalt.png").c_str(), 0, asphaltSRV.GetAddressOf());
+	//CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/Asphalt.png").c_str(), 0, asphaltSRV.GetAddressOf());
 
 	
-
+	
 
 
 
 	//make a material
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertShader = LoadVertexShader(FixPath(L"VertexShader.cso").c_str());
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> DebugUV = LoadPixelShader(FixPath(L"DebugUVsPS.cso").c_str());
+	//Microsoft::WRL::ComPtr<ID3D11PixelShader> DebugUV = LoadPixelShader(FixPath(L"DebugUVsPS.cso").c_str());
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> DebugNormal = LoadPixelShader(FixPath(L"DebugNormalsPS.cso").c_str());
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> CustomPS = LoadPixelShader(FixPath(L"CustomPS.cso").c_str());
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> PixelShader = LoadPixelShader(FixPath(L"PixelShader.cso").c_str());
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> ComboPixelShader = LoadPixelShader(FixPath(L"ComboPixelShader.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> NormPixelShader = LoadPixelShader(FixPath(L"NormPixelShader.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> skyVS = LoadVertexShader(FixPath(L"skyVS.cso").c_str());
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> skyPS = LoadPixelShader(FixPath(L"skyPS.cso").c_str());
+
+	
 
 	//DirectX::XMFLOAT3 tint = DirectX::XMFLOAT3(1.0f, 0.5f, 0.5f);
 	//std::shared_ptr<Material> uvMat = std::make_shared<Material>(DebugUV, vertShader, tint);
@@ -321,6 +333,12 @@ void Game::CreateGeometry()
 	whiteMat->AddSRV(0, bricksSRV);
 	materialList.push_back(whiteMat);
 
+	std::shared_ptr<Material> normalMat = std::make_shared<Material>(NormPixelShader, vertShader, white);
+	normalMat->AddSampler(0, sampler);
+	normalMat->AddSRV(0, bricksSRV);
+	normalMat->AddSRV(1, bricksNormSRV);
+	materialList.push_back(normalMat);
+
 
 
 
@@ -342,16 +360,42 @@ void Game::CreateGeometry()
 	meshList.push_back(mesh6);
 	meshList.push_back(mesh7);
 
+
+	this->sky = std::make_shared<Sky>(
+		FixPath(L"../../Assets/Textures/Clouds Blue/right.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Blue/left.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Blue/up.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Blue/down.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Blue/front.png").c_str(),
+		FixPath(L"../../Assets/Textures/Clouds Blue/back.png").c_str(),
+		mesh1,
+		skyVS,
+		skyPS,
+		sampler);
 	
 
 	//make row of entities with custom shader & pixel shader
 	{
 
 
-		std::shared_ptr<Material> materialList[] = {
-			whiteMat, redMat, magentaMat, whiteMat,
-			magentaMat, redMat, whiteMat
-		};
+		for (int i = 0; i < 7; i++)
+		{
+			std::shared_ptr<transform> tr = std::make_shared<transform>();
+
+			float x = -9.0f + (i * 3.0f);
+			tr->MoveAbsolute(x, 4.0f, 10.0f);
+
+			std::shared_ptr<Entity> entity = std::make_shared<Entity>(
+				mesh1, tr, whiteMat);
+
+			entityList.push_back(entity);
+		}
+	}
+
+
+	//make 2nd row of entities with custom shader & pixel shader
+	{
+
 
 		for (int i = 0; i < 7; i++)
 		{
@@ -361,7 +405,7 @@ void Game::CreateGeometry()
 			tr->MoveAbsolute(x, 1.0f, 10.0f);
 
 			std::shared_ptr<Entity> entity = std::make_shared<Entity>(
-				meshList[i], tr, materialList[i]);
+				mesh1, tr, normalMat);
 
 			entityList.push_back(entity);
 		}
@@ -735,6 +779,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		this->entityList.at(i).get()->Draw();
 	}
+
+	this->sky->Draw(camList.at(activeCamIndex));
 
 	///////
 
